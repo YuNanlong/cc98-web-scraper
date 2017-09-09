@@ -11,7 +11,7 @@ class MmPicScraper:
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
         'Accept-Encoding': 'gzip, deflate',
-        'Cookie': 'cc98Simple=0; BoardList=BoardID=Show; owaenabled=True; autoplay=True; ASPSESSIONIDQQBBTQBT=KOMHBHAAFBHLKFEGNGEJPEJI; upNum=0; aspsky=username=singledog&usercookies=3&userid=546532&useranony=&userhidden=2&password=89611f8806cc39a2',
+        'Cookie': '********',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
         'Cache-Control': 'max-age=0'
@@ -19,8 +19,8 @@ class MmPicScraper:
     post_url = 'http://www.cc98.org/list.asp?'
     root_url = 'http://www.cc98.org/'
     file_url = 'http://file.cc98.org/uploadfile/'
-
     boardid = '146'
+    img_link_compiler = re.compile(r'http://file.cc98.org/uploadfile(.+?)\[/upload\]')
 
     def __init__(self, cookie, total_page):
         MmPicScraper.headers['Cookie'] = cookie
@@ -30,8 +30,8 @@ class MmPicScraper:
 
     def get_post_link(self):
         for i in range(self.total_page):
-            data = {'boardid': self.boardid, 'page': str(i + 1), 'action': ''}
-            result = requests.get(self.post_url, 'html.parser', headers=self.headers, data=data)
+            data = {'boardid': MmPicScraper.boardid, 'page': str(i + 1), 'action': ''}
+            result = requests.get(MmPicScraper.post_url, 'html.parser', headers=MmPicScraper.headers, data=data)
             result.raise_for_status()
             result_soup = bs4.BeautifulSoup(result.text)
             post_link_list = result_soup.select('a[id^="topic_"]')
@@ -40,17 +40,17 @@ class MmPicScraper:
 
     def get_img_link(self):
         for post_link in self.post_link_list:
-            post = requests.get(self.root_url + post_link.attrs['href'], 'html.parser', headers=self.headers)
+            post = requests.get(MmPicScraper.root_url + post_link.attrs['href'], 'html.parser', headers=MmPicScraper.headers)
             post.raise_for_status()
             post_soup = bs4.BeautifulSoup(post.text)
             ubbcode1_text = post_soup.select('#ubbcode1')[0].get_text()
-            img_link_list = re.compile(r'http://file.cc98.org/uploadfile(.+?)\[/upload\]').findall(ubbcode1_text)
+            img_link_list = MmPicScraper.img_link_compiler.findall(ubbcode1_text)
             self.img_link_list.extend(img_link_list)
         print('前%d页的帖子中的图片链接抓取完毕' % self.total_page)
 
     def download_img(self):
         for img_link in self.img_link_list:
-            img_url = self.file_url + img_link
+            img_url = MmPicScraper.file_url + img_link
             img_src = requests.get(img_url)
             try:
                 img_src.raise_for_status()

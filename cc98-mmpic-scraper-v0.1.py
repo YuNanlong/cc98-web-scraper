@@ -23,7 +23,7 @@ browser.implicitly_wait(10)
 linkElem = browser.find_element_by_link_text('mm图片')
 linkElem.click()
 resList = []
-for i in range(10): # 爬取前十页，可以更改
+for i in range(2): # 爬取前十页，可以更改
     browser.implicitly_wait(10)
     print('正在爬取第 %d 页' % (i + 1))
     soup = bs4.BeautifulSoup(browser.page_source, 'html.parser')
@@ -52,9 +52,10 @@ for i in range(10): # 爬取前十页，可以更改
 print('Done')
 browser.close() # 必须关闭页面，否则会因为之后程序一直在下载图片而对浏览器没有操作导致浏览器与服务器连接中断，抛出异常
 
+compiler = re.compile('http://file.cc98.org/uploadfile/')
 for item in resList:
     imageUrl = item.get('href')
-    if re.match('http://file.cc98.org/uploadfile/', imageUrl) == None: # 图片的外链可能不是cc98上的，可能是新浪等等，
+    if compiler.match(imageUrl) == None: # 图片的外链可能不是cc98上的，可能是新浪等等，
                                                                     # 有可能需要登录等等导致无法下载
         continue
     imageSrc = requests.get(imageUrl)
